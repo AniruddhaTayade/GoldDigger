@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'loading_screen.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -200,12 +201,14 @@ class _SlideToUnlockButtonState extends State<_SlideToUnlockButton> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final fullWidth = MediaQuery.of(context).size.width;
-    _maxDrag = fullWidth - 80 - 60; // Total width - padding - handle size
+    final screenWidth = MediaQuery.of(context).size.width;
+    _maxDrag = screenWidth - 80 - 60; // padding (40+40) and handle size (60)
   }
 
   @override
   Widget build(BuildContext context) {
+    double progress = (_dragX / _maxDrag).clamp(0.0, 1.0);
+
     return Positioned(
       bottom: 100,
       left: 40,
@@ -220,16 +223,37 @@ class _SlideToUnlockButtonState extends State<_SlideToUnlockButton> {
         child: Stack(
           alignment: Alignment.centerLeft,
           children: [
+            // Centered Crossfading Text
             Center(
-              child: Text(
-                "Way to Wealth",
-                style: TextStyle(
-                  color: Colors.white60,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1,
-                ),
+              child: Stack(
+                children: [
+                  Opacity(
+                    opacity: 1.0 - progress,
+                    child: const Text(
+                      "Get Started",
+                      style: TextStyle(
+                        color: Colors.white60,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  Opacity(
+                    opacity: progress,
+                    child: const Text(
+                      "Way to Wealth",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
+            // Sliding Button
             Positioned(
               left: _dragX,
               child: GestureDetector(
@@ -241,17 +265,17 @@ class _SlideToUnlockButtonState extends State<_SlideToUnlockButton> {
                 },
                 onHorizontalDragEnd: (_) {
                   if (_dragX >= _maxDrag * 0.9) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Welcome to Wealth! 💰")),
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoadingScreen()),
                     );
-                    // TODO: Navigate to home screen here
                   }
                   setState(() => _dragX = 0); // Reset
                 },
                 child: Container(
                   width: 60,
                   height: 60,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
